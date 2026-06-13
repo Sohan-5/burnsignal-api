@@ -1,0 +1,17 @@
+{
+  "sprint": {
+    "avg_overrun_pct": 0.18,
+    "phase_cost_curves": {},
+    "signal_weights": {"velocity_gap": 0.35, "overdue_ratio": 0.30, "scope_creep_rate": 0.15, "headcount_delta": 0.20}
+  },
+  "medium": {
+    "avg_overrun_pct": 0.27,
+    "phase_cost_curves": {"1_of_3": 0.25, "2_of_3": 0.55, "3_of_3": 1.0},
+    "signal_weights": {"phase_slip_days": 0.30, "timeline_pressure": 0.25, "velocity_gap": 0.20, "headcount_delta": 0.25}
+  },
+  "program": {
+    "avg_overrun_pct": 0.45,
+    "phase_cost_curves": {"1_of_4": 0.15, "2_of_4": 0.38, "3_of_4": 0.68, "4_of_4": 1.0},
+    "signal_weights": {"phase_slip_days": 0.35, "budget_acceleration": 0.30, "timeline_pressure": 0.20, "headcount_delta": 0.15}
+  }
+}
