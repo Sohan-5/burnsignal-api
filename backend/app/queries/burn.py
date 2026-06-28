@@ -166,7 +166,7 @@ async def get_daily_burn_rate(db: AsyncSession, project_id: str, window_days: in
         SELECT COALESCE(SUM(cost) / NULLIF(:window_days, 0), 0)::float AS daily_rate
         FROM time_entries
         WHERE project_id = :project_id
-          AND entry_date >= CURRENT_DATE - INTERVAL ':window_days days'
+          AND entry_date >= CURRENT_DATE - (:window_days || ' days')::interval
     """), {"project_id": project_id, "window_days": window_days})
     row = result.fetchone()
     return row.daily_rate if row else 0.0

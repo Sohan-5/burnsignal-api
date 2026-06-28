@@ -4,6 +4,7 @@ class Settings(BaseSettings):
     DATABASE_URL: str
     CLERK_SECRET_KEY: str
     CLERK_WEBHOOK_SECRET: str
+    CLERK_JWKS_URL: str
     TRELLO_API_KEY: str = ""
     TRELLO_API_SECRET: str = ""
     TRELLO_REDIRECT_URI: str = ""

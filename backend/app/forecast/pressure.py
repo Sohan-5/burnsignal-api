@@ -28,6 +28,7 @@ def overdue_ratio(tasks: list) -> float:
     return sum(1 for t in open_tasks if t.get("is_overdue")) / len(open_tasks)
 
 def scope_creep_rate(tasks: list, baseline_count: int) -> float:
+    baseline_count = baseline_count or 0
     if baseline_count == 0:
         return 0.0
     return min(1.0, max(0, len(tasks) - baseline_count) / baseline_count)
@@ -43,7 +44,7 @@ def phase_slip_days(phases: list) -> float:
     return min(1.0, total_slip / duration)
 
 def timeline_pressure(project: dict) -> float:
-    e = project.get("elapsed_pct", 0)
+    e = float(project.get("elapsed_pct", 0) or 0)
     if e < 0.5: return e * 0.2
     if e < 0.8: return 0.1 + (e - 0.5) * 0.6
     return 0.28 + (e - 0.8) * 3.6
