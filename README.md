@@ -34,4 +34,4 @@ Built for H0: Hack the Zero Stack — Track 2 Monetizable B2B App.
 
 > **Note:** The live demo at [burnsignal.vercel.app](https://burnsignal.vercel.app) is currently running on frontend mock data. The AWS Aurora PostgreSQL database has been paused to manage costs on this personal/hackathon project. The UI, forecasting logic, pressure signals, and Trello integration all reflect real data structures — the values shown are representative seed data from the original live deployment.
 >
-> To run with a live backend, see Getting Started below.
+> To run with a live backend, see Getting Started above.
