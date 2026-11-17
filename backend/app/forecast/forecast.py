@@ -12,7 +12,13 @@ from app.forecast.pressure import compute_all_signals
 from app.forecast.calibration import load_priors
 from app.forecast.combiner import combine, ForecastResult
 from app.forecast.store import save_snapshot
-from app.queries.burn import get_cumulative_spend_series, get_pressure_signals_data, get_daily_burn_rate, get_burn_summary
+from app.queries.burn import (
+    get_cumulative_spend_series,
+    get_calendar_daily_cumulative_spend,
+    get_pressure_signals_data,
+    get_daily_burn_rate,
+    get_burn_summary,
+)
 from app.jobs.queue import enqueue
 from sqlalchemy import text
 
@@ -60,7 +66,11 @@ async def run_forecast(project_id: str, db: AsyncSession) -> ForecastResult:
     if tier_config.tier == 1:
         baseline_result.update(weighted_linear(series, budget))
     elif tier_config.tier == "3b":
-        baseline_result.update(holt_winters(series, budget))
+        # Holt-Winters needs one point per calendar day ending today (weekly /
+        # sprint seasonality, day-by-day breach projection), so it gets a
+        # gap-filled series instead of the entry-days-only one.
+        calendar_series = await get_calendar_daily_cumulative_spend(db, project_id)
+        baseline_result.update(holt_winters(calendar_series, budget))
     else:
         baseline_result.update(holts_smoothing(series, budget))
 
