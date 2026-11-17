@@ -40,7 +40,7 @@ def holt_winters(
     alpha: float = 0.3,
     beta: float = 0.1,
     gamma: float = 0.1,
-    max_horizon_days: int = 365,
+    max_horizon_days: int = 3650,
 ) -> dict:
     """Additive Holt-Winters (triple exponential smoothing) on DAILY burn.
 

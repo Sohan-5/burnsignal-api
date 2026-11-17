@@ -189,3 +189,43 @@ async def get_cumulative_spend_series(db: AsyncSession, project_id: str) -> list
         ORDER BY entry_date
     """), {"project_id": project_id})
     return [row.cumulative_cost for row in result]
+
+
+async def get_calendar_daily_cumulative_spend(db: AsyncSession, project_id: str) -> list[float]:
+    """
+    Cumulative spend with exactly ONE value per calendar day, from the first
+    time entry through today (or the last entry, if later). Days with no time
+    entries (weekends, holidays) repeat the previous total instead of being
+    skipped.
+
+    get_cumulative_spend_series() only returns days that have entries, so its
+    index is "entry days", not calendar days. Holt-Winters needs real calendar
+    days: its 14-day seasonal period and its day-by-day breach projection both
+    assume consecutive days ending today.
+    """
+    result = await db.execute(text("""
+        WITH daily AS (
+            SELECT entry_date, SUM(cost) AS cost
+            FROM time_entries
+            WHERE project_id = :project_id
+            GROUP BY entry_date
+        ),
+        bounds AS (
+            SELECT MIN(entry_date) AS first_day,
+                   GREATEST(MAX(entry_date), CURRENT_DATE) AS last_day
+            FROM daily
+        ),
+        days AS (
+            SELECT generate_series(first_day, last_day, interval '1 day')::date AS day
+            FROM bounds
+            WHERE first_day IS NOT NULL
+        )
+        SELECT SUM(COALESCE(daily.cost, 0)) OVER (
+                   ORDER BY days.day
+                   ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+               )::float AS cumulative_cost
+        FROM days
+        LEFT JOIN daily ON daily.entry_date = days.day
+        ORDER BY days.day
+    """), {"project_id": project_id})
+    return [row.cumulative_cost for row in result]

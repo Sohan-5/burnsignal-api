@@ -64,6 +64,46 @@ def test_no_spend_means_no_breach():
     assert out["trend"] == 0.0
 
 
+def test_long_program_horizon_still_finds_breach():
+    # ~473 days of budget left; programs routinely run longer than a year
+    daily = _seasonal_daily(63)
+    series = _cumulative(daily)
+    avg = sum(daily) / len(daily)
+    budget = series[-1] + avg * 473
+    breach = holt_winters(series, budget)["breach_date"]
+    assert breach is not None
+    assert abs((breach - date.today()).days - 473) <= 14
+
+
+def test_weekday_only_calendar_series_projects_calendar_days():
+    # $1000 per weekday, nothing on weekends, gap-filled to one point per day
+    daily = [1000.0 if d % 7 < 5 else 0.0 for d in range(56)]
+    series = _cumulative(daily)
+    budget = series[-1] + 20_000  # 20 working days = 4 weeks starting Monday
+    breach = holt_winters(series, budget)["breach_date"]
+    assert (breach - date.today()).days == 26  # Friday of the 4th week
+
+
+def test_output_works_with_combiner():
+    from app.forecast.combiner import combine
+
+    daily = _seasonal_daily(63)
+    series = _cumulative(daily)
+    budget = series[-1] + (sum(daily) / len(daily)) * 60
+    hw = holt_winters(series, budget)
+    baseline = {"tier": "3b", "data_points": len(series), **hw}
+
+    no_pressure = combine(baseline, {}, {}, budget)
+    assert no_pressure.tier == "3b"
+    assert no_pressure.baseline_forecast == round(series[-1], 2)
+    # combiner's linear date and the seasonal projection agree within a cycle
+    assert abs((no_pressure.predicted_breach_date - hw["breach_date"]).days) <= 14
+
+    pressured = combine(baseline, {"budget_acceleration": 1.0}, {"budget_acceleration": 0.5}, budget)
+    assert pressured.pressure_multiplier == 1.5
+    assert pressured.predicted_breach_date < no_pressure.predicted_breach_date
+
+
 def test_negative_corrections_do_not_crash():
     daily = _seasonal_daily(56)
     daily[30] = -2000.0  # refund / correction entry
